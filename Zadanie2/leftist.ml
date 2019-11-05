@@ -1,7 +1,7 @@
 (* 
  Implementacja interfejsu kolejki priorytetowej
  Autor: Filip Bienkowski
- Recenzent: 
+ Recenzent: Daniel Filimonow
 *)
 
 (* Definicje typow *)
@@ -60,10 +60,10 @@ let rec new_queue_with p =
     match p with (n1, n2) ->
         let n3 = join n1.right (node_to_queue n2) in
             if depth n1.left < depth n3 
-            then Node{left = n3; right = n1.left;
-                      priority = n1.priority; depth = ((depth n1.left) + 1)}
-            else Node{left = n1.left; right = n3;
-                      priority = n1.priority; depth = ((depth n3) + 1)}
+            then Node({left = n3; right = n1.left;
+                      priority = n1.priority; depth = ((depth n1.left) + 1)})
+            else Node({left = n1.left; right = n3;
+                      priority = n1.priority; depth = ((depth n3) + 1)})
 
 (* Funkcja laczy dwie kolejki priorytetowe q1 i q2 *)
 and join q1 q2 =
