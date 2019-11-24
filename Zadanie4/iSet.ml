@@ -1,0 +1,4 @@
+(*
+    Autor: Filip Bienkowski
+    Recenzent:
+*)
