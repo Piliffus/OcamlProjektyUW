@@ -50,14 +50,14 @@ exception Bledny_Przedzial
 (* Funkcje pomocnicze *)
 
 (* 
-    Funkcja porownujaca dwa przedzialy. ujemna wartosc oznacza ze przedzial 'b' jest wiekszy,
-    dodatnia oznacza ze przedzial 'a' jest wiekszy. 0 oznacza ze przedzialy sie przecinaja.
+    Funkcja porownujaca dwa przedzialy. ujemna wartosc oznacza ze przedzial 'b' 
+    zaczyna sie od wiekszych wartosci, dodatnia oznacza ze przedzial 'a'. 
+    0 oznacza ze przedzialy sie przecinaja.
 *)
 let cmp (a1, a2) (b1, b2) =
-    if b1 > a2 then -1
-    else if a1 > b2 then 1
+    if a2 < b1 then -1
+    else if b2 < a1 then 1
     else 0
-
 (* Funkcja odczytująca wysokosc z zadanego wezla 'x' *)
 let wysokosc =
     function
@@ -72,16 +72,12 @@ let elementy_poddrzewa =
 
 (* Zwraca sumę liczb lub max_int jeśli przekracza ona max_int *)
 let suma a b c d =
-    if max (max a b) (max c d) = 
-        max_int ||
-        a >= max_int - b ||
-        c >= max_int - d ||
-        a + b >= max_int - c - d
+    if a + b < 0 || a + b + c < 0 || a + b + c + d < 0
     then max_int
     else a + b + c + d
 
 (* Wielkosc przedziału w wezle *)
-let ile_elementow =
+let rozmiar_przedzialu =
     function
     | Node ({value = (v1, v2)}) -> abs (v2 - v1) + 1
     | Empty -> 0
@@ -91,7 +87,7 @@ let make l v r =
     Node({left = l; value = v; right = r; 
           height = max (wysokosc l) ((wysokosc r) + 1); 
           elementy_poddrzew = suma 
-          (elementy_poddrzewa l) (ile_elementow l) (elementy_poddrzewa r) (ile_elementow r)})
+          (elementy_poddrzewa l) (rozmiar_przedzialu l) (elementy_poddrzewa r) (rozmiar_przedzialu r)})
 
 (* 
     Balansuje drzewo utworzone z poddrzew 'l' i 'r' oraz zakresu 'v'
@@ -129,9 +125,11 @@ let rec add_one x =
             if c = 0 then make l x r 
             else if c < 0 
                 then
-                bal (add_one x l) v r
+                let nl = add_one x l
+                in bal nl v r
                 else
-                bal l v (add_one x r)
+                let nr = add_one x r
+                in bal l v nr
     | Empty -> make Empty x Empty
 
 (* Zwraca drzewo zawierające elementy z 'l' 'r' i wezel z przedzialem 'v' *)
@@ -216,7 +214,7 @@ let znajdz_skrajne s v =
     przedziały mniejsze od 'x' a 'r' to przedziały większe od 'x'.
     Present to wartość logiczna oznaczająca istnienie 'x' w 's'
 *)
-let split_pset x s =
+let rozdziel x s =
     let rec walk x =
         function
         | Empty -> (Empty, false, Empty)
@@ -299,10 +297,10 @@ let below x s =
                 let c = cmp (x, x) (v1, v2) in
                 if c = 0 then
                     if x - v1 + 1 <= 0 then max_int
-                    else suma (elementy_poddrzewa l) (ile_elementow l) (x - v1 + 1) 0
+                    else suma (elementy_poddrzewa l) (rozmiar_przedzialu l) (x - v1 + 1) 0
                 else
                     if c < 0 then walk l
-                    else suma (elementy_poddrzewa l) (ile_elementow l) (ile_elementow s) (walk r)
+                    else suma (elementy_poddrzewa l) (rozmiar_przedzialu l) (rozmiar_przedzialu s) (walk r)
         | Empty -> 0
     in 
     walk s
@@ -319,8 +317,8 @@ let add x s =
     if fst x > snd x then raise Bledny_Przedzial else
         let (l', r') = znajdz_skrajne s x in
         if l' = x && r' = x then add_one x s else
-        let (l_tree, _, r1_tree) = split_pset l' s in
-        let (_, _, r_tree) = split_pset r' s in
+        let (l_tree, _, r1_tree) = rozdziel l' s in
+        let (_, _, r_tree) = rozdziel r' s in
         let x2 = (min (fst l') (fst x), max (snd r') (snd x)) in
         join l_tree x2 r_tree
 
@@ -336,8 +334,8 @@ let add x s =
 *)
 let split x s =
     let (lewy_skraj, prawy_skraj) = znajdz_skrajne s (x, x) in
-    let (l1, _, r1) = split_pset lewy_skraj s in
-    let (_, _, r2) = split_pset prawy_skraj r1 in
+    let (l1, _, r1) = rozdziel lewy_skraj s in
+    let (_, _, r2) = rozdziel prawy_skraj r1 in
     let l2 =
         if fst lewy_skraj < x
         then add (fst lewy_skraj, x - 1) l1
@@ -360,8 +358,8 @@ let split x s =
 let remove x s =
   if fst x > snd x then raise Bledny_Przedzial else
     let (lewy_skraj, prawy_skraj) = znajdz_skrajne s x in
-    let (l1, _, r1) = split_pset lewy_skraj s in
-    let (_, _, r2) = split_pset prawy_skraj r1 in
+    let (l1, _, r1) = rozdziel lewy_skraj s in
+    let (_, _, r2) = rozdziel prawy_skraj r1 in
     let nowe_s = sklej l1 r2 in
     let nowe_s_2 =
         if fst lewy_skraj < fst x
