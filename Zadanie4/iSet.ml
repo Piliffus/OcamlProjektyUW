@@ -73,7 +73,7 @@ let rozmiar_przedzialu =
 
 (* Zwraca sumę liczb lub max_int jeśli przekracza ona max_int *)
 let suma a b c d =
-    if a + b < 0 || a + b + c < 0 || a + b + c + d < 0
+    if a + b + c + d < 0
     then max_int
     else a + b + c + d
 
