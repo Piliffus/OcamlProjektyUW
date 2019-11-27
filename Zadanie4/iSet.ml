@@ -68,19 +68,26 @@ let elementy_poddrzew =
 (* Wielkosc przedziału w wezle *)
 let rozmiar_przedzialu =
     function
-    | Node(_, (v1, v2), _, _, _) -> abs (v2 - v1) + 1
+    | Node(_, (v1, v2), _, _, _) -> 
+      let cand = abs (v2 - v1) + 1 in
+      if v2 > 0 && v1 > 0 then cand else
+      if (v2-v1) < 0 then max_int else cand
     | Empty -> 0
 
 (* Zwraca sumę liczb lub max_int jeśli przekracza ona max_int *)
-let suma a b c d =
-    if a + b + c + d < 0
+let suma a b =
+    if a + b < 0
     then max_int
-    else a + b + c + d
+    else a + b
+
+(* Suma listy intow *)
+let suma_list l =
+    List.fold_left suma 0 l
 
 (* Konstruktor wezla o poddrzewach 'l', 'r' i przedziale 'v' *)
 let make l v r =
     Node(l, v, r, max (wysokosc l) (wysokosc r) + 1, 
-    suma (elementy_poddrzew l) (rozmiar_przedzialu l) (elementy_poddrzew r) (rozmiar_przedzialu r))
+    suma_list [(elementy_poddrzew l); (rozmiar_przedzialu l); (elementy_poddrzew r); (rozmiar_przedzialu r)])
 
 (* 
     Balansuje drzewo utworzone z poddrzew 'l' i 'r' oraz zakresu 'v'
@@ -354,10 +361,10 @@ let below x s =
         let c = cmp (x, x) (v1, v2) in
         if c = 0 then
             if x - v1 + 1 <= 0 then max_int
-            else suma (elementy_poddrzew l) (rozmiar_przedzialu l) (x - v1 + 1) 0
+            else suma_list [(elementy_poddrzew l); (rozmiar_przedzialu l); (x - v1 + 1); 0]
         else
             if c < 0 then walk l
-            else suma (elementy_poddrzew l) (rozmiar_przedzialu l) (rozmiar_przedzialu s) (walk r)
+            else suma_list [(elementy_poddrzew l); (rozmiar_przedzialu l); (rozmiar_przedzialu s); (walk r)]
     | Empty -> 0
   in 
   walk s
